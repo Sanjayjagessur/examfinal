@@ -1,0 +1,156 @@
+import React, { useState, useMemo } from 'react';
+import { useDrop } from 'react-dnd';
+import { ExamCard } from '../types';
+import DraggableExamCard from './DraggableExamCard';
+import { format, addDays, startOfWeek } from 'date-fns';
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+
+interface CalendarCanvasProps {
+  examCards: ExamCard[];
+  onUpdateExamCard: (id: string, updates: Partial<ExamCard>) => void;
+  selectedDate: string;
+  onDateChange: (date: string) => void;
+}
+
+const CalendarCanvas: React.FC<CalendarCanvasProps> = ({
+  examCards,
+  onUpdateExamCard,
+  selectedDate,
+  onDateChange
+}) => {
+  const [currentWeek, setCurrentWeek] = useState(new Date());
+
+  const weekDays = useMemo(() => {
+    const start = startOfWeek(currentWeek, { weekStartsOn: 1 }); // Monday start
+    return Array.from({ length: 5 }, (_, i) => addDays(start, i)); // Monday to Friday
+  }, [currentWeek]);
+
+  const handleDrop = (item: { id: string; type: string }, day: Date) => {
+    if (item.type === 'examCard') {
+      const examCard = examCards.find(card => card.id === item.id);
+      if (examCard) {
+        onUpdateExamCard(item.id, {
+          date: format(day, 'yyyy-MM-dd'),
+          session: 'morning' // Default to morning session
+        });
+      }
+    }
+  };
+
+  const getExamCardsForDay = (day: Date): ExamCard[] => {
+    const dayStr = format(day, 'yyyy-MM-dd');
+    return examCards.filter(card => card.date === dayStr);
+  };
+
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    setCurrentWeek(prev => {
+      const newWeek = direction === 'next' 
+        ? addDays(prev, 7) 
+        : addDays(prev, -7);
+      return newWeek;
+    });
+  };
+
+  const DayColumn: React.FC<{ day: Date }> = ({ day }) => {
+    const [{ isOver }, drop] = useDrop({
+      accept: 'examCard',
+      drop: (item: { id: string; type: string }) => {
+        console.log('Dropping exam card:', item.id, 'on day:', day);
+        handleDrop(item, day);
+      },
+      collect: (monitor) => ({
+        isOver: monitor.isOver(),
+      }),
+    });
+
+    const dayExamCards = getExamCardsForDay(day);
+
+    return (
+      <div
+        ref={drop}
+        className={`flex-1 min-h-[400px] p-4 border border-gray-200 ${
+          isOver ? 'bg-blue-50 border-blue-300' : 'bg-white'
+        }`}
+        title={`Drop exam card here for ${format(day, 'EEEE, MMM d')}`}
+      >
+        <div className="text-center mb-4">
+          <div className="text-sm font-medium text-gray-900">
+            {format(day, 'EEE')}
+          </div>
+          <div className="text-xs text-gray-500">
+            {format(day, 'MMM d')}
+          </div>
+        </div>
+        
+        <div className="space-y-2 min-h-[300px]">
+          {/* All exam cards */}
+          <div className="space-y-2">
+            {dayExamCards.map(examCard => (
+              <DraggableExamCard key={examCard.id} examCard={examCard} />
+            ))}
+          </div>
+          
+          {/* Empty state */}
+          {dayExamCards.length === 0 && (
+            <div className="text-center py-8 text-gray-400">
+              <div className="text-xs">Drop exam cards here</div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-white">
+      {/* Calendar Header */}
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Calendar size={20} className="text-gray-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Exam Schedule</h2>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => navigateWeek('prev')}
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-sm font-medium text-gray-700">
+              {format(weekDays[0], 'MMM d')} - {format(weekDays[4], 'MMM d, yyyy')}
+            </span>
+            <button
+              onClick={() => navigateWeek('next')}
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Calendar Grid - Dynamic Layout */}
+      <div className="flex-1 overflow-auto p-4">
+        <div className="flex gap-4 h-full">
+          {weekDays.map(day => (
+            <DayColumn key={day.toISOString()} day={day} />
+          ))}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="p-4 border-t border-gray-200 bg-gray-50">
+        <div className="flex items-center space-x-6 text-sm">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded"></div>
+            <span className="text-gray-600">Drop exam cards anywhere in the column</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CalendarCanvas;
