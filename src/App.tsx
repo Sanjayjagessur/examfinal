@@ -5,14 +5,18 @@ import Header from './components/Header';
 import ExamCardManager from './components/ExamCardManager';
 import CalendarCanvas from './components/CalendarCanvas';
 import TimetablePreview from './components/TimetablePreview';
+import InvigilationManager from './components/InvigilationManager';
 import { generateStudentTimetablePDF, generateExamSummaryPDF } from './utils/export';
 import { generateStudentTimetableWord, generateExamSummaryWord } from './utils/wordExport';
+import { generateInvigilationSchedulePDF, generateInvigilationScheduleWord, generateEducatorSchedulePDF, generateEducatorScheduleWord } from './utils/invigilationExport';
+import { Calendar, Users } from 'lucide-react';
 
 
 
 function App() {
   const [examCards, setExamCards] = useState<ExamCard[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'timetable' | 'invigilation'>('timetable');
 
   // Check if running in Electron environment
   const isElectron = window.electronAPI !== undefined;
@@ -108,6 +112,14 @@ function App() {
     }
   };
 
+  const exportInvigilationSchedule = async (sessions: any[]) => {
+    try {
+      await generateInvigilationScheduleWord(sessions);
+    } catch (error) {
+      alert('Error generating invigilation schedule: ' + error);
+    }
+  };
+
   const saveTimetable = async () => {
     if (!isElectron) {
       alert('Save functionality is only available in the desktop application.');
@@ -170,35 +182,79 @@ function App() {
         onLoadTimetable={isElectron ? loadTimetable : undefined}
       />
       
-      <div className="flex h-screen pt-16">
-        {/* Left Sidebar - Exam Card Management */}
-        <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
-          <ExamCardManager
-            examCards={examCards}
-            onAddExamCard={addExamCard}
-            onUpdateExamCard={updateExamCard}
-            onDeleteExamCard={deleteExamCard}
-          />
-        </div>
+      {/* Main Navigation Tabs */}
+      <div className="pt-16">
+                 <div className="bg-white border-b border-gray-200">
+           <nav className="flex space-x-8 px-6">
+             <button
+               onClick={() => setActiveTab('timetable')}
+               className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
+                 activeTab === 'timetable'
+                   ? 'border-blue-500 text-blue-600'
+                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+               }`}
+             >
+               <Calendar size={16} />
+               <span>Exam Timetable</span>
+             </button>
+             <button
+               onClick={() => setActiveTab('invigilation')}
+               className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
+                 activeTab === 'invigilation'
+                   ? 'border-blue-500 text-blue-600'
+                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+               }`}
+             >
+               <Users size={16} />
+               <span>Invigilation Management</span>
+             </button>
+           </nav>
+           
+           
+         </div>
 
-        {/* Center - Calendar Canvas */}
-        <div className="flex-1 overflow-hidden">
-          <CalendarCanvas
-            examCards={examCards}
-            onUpdateExamCard={updateExamCard}
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-          />
-        </div>
+        {/* Tab Content */}
+        {activeTab === 'timetable' && (
+          <div className="flex h-screen">
+            {/* Left Sidebar - Exam Card Management */}
+            <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
+              <ExamCardManager
+                examCards={examCards}
+                onAddExamCard={addExamCard}
+                onUpdateExamCard={updateExamCard}
+                onDeleteExamCard={deleteExamCard}
+              />
+            </div>
 
-        {/* Right Sidebar - Timetable Preview */}
-        <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto">
-          <TimetablePreview 
-            examCards={examCards}
-            onExportPDF={exportStudentTimetable}
-            onExportWord={exportToWord}
-          />
-        </div>
+            {/* Center - Calendar Canvas */}
+            <div className="flex-1 overflow-hidden">
+              <CalendarCanvas
+                examCards={examCards}
+                onUpdateExamCard={updateExamCard}
+                selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
+              />
+            </div>
+
+            {/* Right Sidebar - Timetable Preview */}
+            <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto">
+              <TimetablePreview 
+                examCards={examCards}
+                onExportPDF={exportStudentTimetable}
+                onExportWord={exportToWord}
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'invigilation' && (
+          <div className="h-screen">
+            <InvigilationManager
+              examCards={examCards}
+              onExportInvigilationSchedule={exportInvigilationSchedule}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

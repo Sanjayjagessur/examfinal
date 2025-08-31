@@ -52,21 +52,21 @@ const TimetablePreview: React.FC<TimetablePreviewProps> = ({
             <FileText size={20} className="text-gray-600" />
             <h2 className="text-lg font-semibold text-gray-900">Timetable Preview</h2>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1">
             <button
               onClick={onExportPDF}
-              className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+              className="flex items-center space-x-1 px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-xs"
               title="Export to PDF"
             >
-              <Download size={16} />
+              <Download size={12} />
               <span>PDF</span>
             </button>
             <button
               onClick={onExportWord}
-              className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+              className="flex items-center space-x-1 px-2 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-xs"
               title="Export to Word"
             >
-              <FileDown size={16} />
+              <FileDown size={12} />
               <span>Word</span>
             </button>
           </div>

@@ -35,8 +35,8 @@
     "eject": "react-scripts eject",
     "electron": "electron .",
     "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron-pack": "npm run build && electron-builder -c.extraMetadata.main=build/electron.js",
-    "preelectron-pack": "npm run build && cp public/electron.js build/",
+    "electron-pack": "npm run build && electron-builder",
+    "postbuild": "copy public\\electron.js build\\ && copy public\\preload.js build\\",
     "dist": "npm run build && electron-builder"
   },
   "eslintConfig": {

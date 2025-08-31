@@ -1,0 +1,8 @@
+name,capacity,type,building,floor
+Room 101,30,classroom,Main Building,1
+Room 102,25,classroom,Main Building,1
+Room 103,35,classroom,Main Building,1
+Lab A,20,laboratory,Science Block,1
+Lab B,25,laboratory,Science Block,1
+Main Hall,150,hall,Auditorium,1
+Conference Hall,80,hall,Auditorium,2
