@@ -1,9 +1,11 @@
 import React from 'react';
-import { Download, FileText, Save, FolderOpen } from 'lucide-react';
+import { Download, FileText, Save, FolderOpen, FileDown } from 'lucide-react';
 
 interface HeaderProps {
   onExportStudentTimetable: () => void;
   onExportExamSummary: () => void;
+  onExportStudentTimetableWord?: () => void;
+  onExportExamSummaryWord?: () => void;
   onSaveTimetable?: () => void;
   onLoadTimetable?: () => void;
 }
@@ -11,6 +13,8 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({
   onExportStudentTimetable,
   onExportExamSummary,
+  onExportStudentTimetableWord,
+  onExportExamSummaryWord,
   onSaveTimetable,
   onLoadTimetable
 }) => {
@@ -47,20 +51,42 @@ const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onExportStudentTimetable}
             className="flex items-center space-x-2 btn-primary"
-            title="Export Student Timetable"
+            title="Export Student Timetable (PDF)"
           >
             <FileText size={16} />
-            <span>Student Timetable</span>
+            <span>Student Timetable (PDF)</span>
           </button>
+
+          {onExportStudentTimetableWord && (
+            <button
+              onClick={onExportStudentTimetableWord}
+              className="flex items-center space-x-2 px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+              title="Export Student Timetable (Word)"
+            >
+              <FileDown size={16} />
+              <span>Student Timetable (Word)</span>
+            </button>
+          )}
 
           <button
             onClick={onExportExamSummary}
             className="flex items-center space-x-2 btn-secondary"
-            title="Export Exam Summary"
+            title="Export Exam Summary (PDF)"
           >
             <Download size={16} />
-            <span>Exam Summary</span>
+            <span>Exam Summary (PDF)</span>
           </button>
+
+          {onExportExamSummaryWord && (
+            <button
+              onClick={onExportExamSummaryWord}
+              className="flex items-center space-x-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors"
+              title="Export Exam Summary (Word)"
+            >
+              <FileDown size={16} />
+              <span>Exam Summary (Word)</span>
+            </button>
+          )}
         </div>
       </div>
 

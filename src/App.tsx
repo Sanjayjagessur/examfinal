@@ -6,6 +6,7 @@ import ExamCardManager from './components/ExamCardManager';
 import CalendarCanvas from './components/CalendarCanvas';
 import TimetablePreview from './components/TimetablePreview';
 import { generateStudentTimetablePDF, generateExamSummaryPDF } from './utils/export';
+import { generateStudentTimetableWord, generateExamSummaryWord } from './utils/wordExport';
 
 
 
@@ -91,11 +92,20 @@ function App() {
     generateExamSummaryPDF(examCards);
   };
 
-  const exportToWord = () => {
-    // For now, we'll use the PDF export as a placeholder
-    // In a real implementation, you would use a library like docx or similar
-    alert('Word export functionality will be implemented. For now, please use the PDF export.');
-    generateStudentTimetablePDF(examCards);
+  const exportToWord = async () => {
+    try {
+      await generateStudentTimetableWord(examCards);
+    } catch (error) {
+      alert('Error generating Word document: ' + error);
+    }
+  };
+
+  const exportExamSummaryToWord = async () => {
+    try {
+      await generateExamSummaryWord(examCards);
+    } catch (error) {
+      alert('Error generating Word document: ' + error);
+    }
   };
 
   const saveTimetable = async () => {
@@ -154,6 +164,8 @@ function App() {
       <Header 
         onExportStudentTimetable={exportStudentTimetable}
         onExportExamSummary={exportExamSummary}
+        onExportStudentTimetableWord={exportToWord}
+        onExportExamSummaryWord={exportExamSummaryToWord}
         onSaveTimetable={isElectron ? saveTimetable : undefined}
         onLoadTimetable={isElectron ? loadTimetable : undefined}
       />
