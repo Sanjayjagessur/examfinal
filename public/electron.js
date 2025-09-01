@@ -16,19 +16,51 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       enableRemoteModule: false,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.js'),
+      webSecurity: true,
+      allowRunningInsecureContent: false
     },
     icon: path.join(__dirname, 'icon.ico'), // You can add an icon file
     title: 'Jagesaurus - Exam Timetable Manager',
     show: false, // Don't show until ready
   });
 
-  // Load the app
-  const startUrl = isDev 
-    ? 'http://localhost:3000' 
-    : `file://${path.join(__dirname, '../build/index.html')}`;
+  // Set Content Security Policy
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'"]
+      }
+    });
+  });
+
+  // Load the app - always use built files for production
+  const startUrl = `file://${path.join(__dirname, 'index.html')}`;
   
-  mainWindow.loadURL(startUrl);
+  console.log('Loading URL:', startUrl);
+  console.log('Current directory:', __dirname);
+  console.log('Index.html path:', path.join(__dirname, 'index.html'));
+  
+  mainWindow.loadURL(startUrl).catch(err => {
+    console.error('Failed to load URL:', err);
+    mainWindow.loadFile(path.join(__dirname, 'index.html')).catch(fileErr => {
+      console.error('Failed to load file:', fileErr);
+    });
+  });
+
+  // Add error handling for page load
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    console.error('Page failed to load:', errorCode, errorDescription, validatedURL);
+  });
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('Page loaded successfully');
+  });
+
+  mainWindow.webContents.on('dom-ready', () => {
+    console.log('DOM is ready');
+  });
 
   // Show window when ready to prevent visual flash
   mainWindow.once('ready-to-show', () => {
@@ -40,8 +72,8 @@ function createWindow() {
     mainWindow = null;
   });
 
-  // Open DevTools in development
-  if (isDev) {
+  // Open DevTools in development (only when explicitly running in dev mode)
+  if (process.env.NODE_ENV === 'development') {
     mainWindow.webContents.openDevTools();
   }
 }

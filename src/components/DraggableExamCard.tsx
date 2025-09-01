@@ -1,13 +1,15 @@
 import React from 'react';
 import { useDrag } from 'react-dnd';
 import { ExamCard } from '../types';
-import { Clock, Users } from 'lucide-react';
+import { Clock, Users, CheckCircle } from 'lucide-react';
 
 interface DraggableExamCardProps {
   examCard: ExamCard;
 }
 
 const DraggableExamCard: React.FC<DraggableExamCardProps> = ({ examCard }) => {
+  const isScheduled = !!examCard.date;
+  
   const [{ isDragging }, drag] = useDrag({
     type: 'examCard',
     item: { id: examCard.id, type: 'examCard' },
@@ -28,8 +30,8 @@ const DraggableExamCard: React.FC<DraggableExamCardProps> = ({ examCard }) => {
 
   const getCardStyle = () => {
     const baseStyle = {
-      backgroundColor: examCard.color || '#3b82f6',
-      opacity: isDragging ? 0.5 : 1,
+      backgroundColor: isScheduled ? '#f3f4f6' : (examCard.color || '#3b82f6'),
+      opacity: isDragging ? 0.5 : (isScheduled ? 0.7 : 1),
       transform: isDragging ? 'rotate(5deg)' : 'none',
     };
     return baseStyle;
@@ -40,11 +42,19 @@ const DraggableExamCard: React.FC<DraggableExamCardProps> = ({ examCard }) => {
       ref={drag}
       className={`exam-card bg-white border border-gray-200 rounded-lg p-2 shadow-sm cursor-grab hover:shadow-lg transition-all ${
         isDragging ? 'dragging' : ''
-      }`}
+      } ${isScheduled ? 'scheduled' : ''}`}
       style={getCardStyle()}
-      title="Drag to calendar to schedule"
+      title={isScheduled ? "Already scheduled - can be moved to different time/date" : "Drag to calendar to schedule"}
     >
-      <div className="text-white">
+      <div className={`${isScheduled ? 'text-gray-600' : 'text-white'}`}>
+        {/* Scheduled Status Indicator */}
+        {isScheduled && (
+          <div className="flex items-center space-x-1 mb-1">
+            <CheckCircle size={12} className="text-green-600" />
+            <span className="text-xs font-medium text-green-600">Scheduled</span>
+          </div>
+        )}
+        
         <div className="font-medium text-xs mb-1 truncate">
           {examCard.paperName}
         </div>
@@ -69,6 +79,17 @@ const DraggableExamCard: React.FC<DraggableExamCardProps> = ({ examCard }) => {
         {examCard.venue && (
           <div className="text-xs opacity-75 mt-1 truncate">
             📍 {examCard.venue}
+          </div>
+        )}
+        
+        {/* Scheduled Date Info */}
+        {isScheduled && examCard.date && (
+          <div className="text-xs text-gray-500 mt-1 border-t border-gray-200 pt-1">
+            📅 {new Date(examCard.date).toLocaleDateString('en-US', { 
+              weekday: 'short', 
+              month: 'short', 
+              day: 'numeric' 
+            })}
           </div>
         )}
       </div>

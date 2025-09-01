@@ -43,6 +43,18 @@ const TimetablePreview: React.FC<TimetablePreviewProps> = ({
     }
   };
 
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0 && mins > 0) {
+      return `${hours}h ${mins}m`;
+    } else if (hours > 0) {
+      return `${hours}h`;
+    } else {
+      return `${mins}m`;
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Header */}
@@ -115,7 +127,7 @@ const TimetablePreview: React.FC<TimetablePreviewProps> = ({
                             {exam.startTime} - {exam.endTime}
                           </div>
                           <div className="text-xs text-gray-600">
-                            {exam.duration} min • {exam.studentCount} students
+                            {formatDuration(exam.duration)} • {exam.studentCount} students
                           </div>
                         </div>
                       </div>

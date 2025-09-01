@@ -69,15 +69,6 @@ const ExamCardForm: React.FC<ExamCardFormProps> = ({
     }));
   };
 
-  const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const duration = parseInt(e.target.value) || 0;
-    setFormData(prev => ({
-      ...prev,
-      duration,
-      endTime: calculateEndTime(prev.startTime, duration)
-    }));
-  };
-
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -144,19 +135,59 @@ const ExamCardForm: React.FC<ExamCardFormProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="duration" className="form-label">
-              Duration (minutes) *
+              Duration *
             </label>
-            <input
-              type="number"
-              id="duration"
-              name="duration"
-              value={formData.duration}
-              onChange={handleDurationChange}
-              className="form-input"
-              min="15"
-              max="480"
-              required
-            />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label htmlFor="durationHours" className="text-xs text-gray-600">Hours</label>
+                <input
+                  type="number"
+                  id="durationHours"
+                  name="durationHours"
+                  value={Math.floor(formData.duration / 60)}
+                  onChange={(e) => {
+                    const hours = parseInt(e.target.value) || 0;
+                    const minutes = formData.duration % 60;
+                    const newDuration = hours * 60 + minutes;
+                    setFormData(prev => ({
+                      ...prev,
+                      duration: newDuration,
+                      endTime: calculateEndTime(prev.startTime, newDuration)
+                    }));
+                  }}
+                  className="form-input"
+                  min="0"
+                  max="8"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="durationMinutes" className="text-xs text-gray-600">Minutes</label>
+                <input
+                  type="number"
+                  id="durationMinutes"
+                  name="durationMinutes"
+                  value={formData.duration % 60}
+                  onChange={(e) => {
+                    const minutes = parseInt(e.target.value) || 0;
+                    const hours = Math.floor(formData.duration / 60);
+                    const newDuration = hours * 60 + minutes;
+                    setFormData(prev => ({
+                      ...prev,
+                      duration: newDuration,
+                      endTime: calculateEndTime(prev.startTime, newDuration)
+                    }));
+                  }}
+                  className="form-input"
+                  min="0"
+                  max="59"
+                  required
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Total: {Math.floor(formData.duration / 60)}h {formData.duration % 60}m
+            </p>
           </div>
 
           <div>

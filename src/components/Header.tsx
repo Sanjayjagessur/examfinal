@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Download, FileText, Save, FolderOpen, FileDown, ChevronDown } from 'lucide-react';
+import { Download, FileText, Save, FolderOpen, FileDown, ChevronDown, Sun, Moon } from 'lucide-react';
 
 interface HeaderProps {
   onExportStudentTimetable: () => void;
@@ -10,6 +10,8 @@ interface HeaderProps {
   onExportEducatorSchedule?: () => void;
   onSaveTimetable?: () => void;
   onLoadTimetable?: () => void;
+  isDarkMode: boolean;
+  onToggleDarkMode: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -20,7 +22,9 @@ const Header: React.FC<HeaderProps> = ({
   onExportInvigilationSchedule,
   onExportEducatorSchedule,
   onSaveTimetable,
-  onLoadTimetable
+  onLoadTimetable,
+  isDarkMode,
+  onToggleDarkMode
 }) => {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -68,6 +72,16 @@ const Header: React.FC<HeaderProps> = ({
               <span>Load</span>
             </button>
           )}
+
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={onToggleDarkMode}
+            className="flex items-center space-x-1 px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm"
+            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
+            <span>{isDarkMode ? 'Light' : 'Dark'}</span>
+          </button>
 
           {/* Export Dropdown */}
           <div className="relative" ref={dropdownRef}>

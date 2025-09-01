@@ -1,3 +1,5 @@
+import { ExamCard } from './index';
+
 export interface Educator {
   id: string;
   name: string;
@@ -98,4 +100,106 @@ export interface InvigilationConflict {
   sessionId: string;
   message: string;
   severity: 'warning' | 'error';
+}
+
+export interface InvigilatorAbsence {
+  id: string;
+  educatorId: string;
+  educatorName: string;
+  date: string; // ISO date string
+  reason: 'illness' | 'emergency' | 'personal' | 'other';
+  description?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reportedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  replacementEducatorId?: string;
+  replacementEducatorName?: string;
+  sessionsAffected: string[]; // session IDs that need replacement
+}
+
+// Multi-Class System Interfaces
+export interface Class {
+  id: string;
+  name: string; // "Class 10A", "Class 11B", "Grade 12 Science"
+  academicYear: string; // "2024-2025"
+  totalStudents: number;
+  assignedRooms: string[]; // Room IDs assigned to this class
+  assignedEducators: string[]; // Educator IDs assigned to this class
+  examSchedule: string[]; // ExamCard IDs for this class
+  invigilationScheme: string[]; // InvigilationSession IDs for this class
+  createdAt: string;
+  updatedAt: string;
+  isActive: boolean;
+}
+
+export interface ClassExamCard extends Omit<ExamCard, 'id'> {
+  id: string;
+  classId: string; // Reference to the class this exam belongs to
+  className: string; // Display name for the class
+}
+
+export interface ClassInvigilationSession extends Omit<InvigilationSession, 'id'> {
+  id: string;
+  classId: string; // Reference to the class this session belongs to
+  className: string; // Display name for the class
+}
+
+export interface ClassInvigilationSettings extends InvigilationSettings {
+  classId: string;
+  className: string;
+  maxSessionsPerEducatorPerClass: number;
+  preferredClassEducators: string[]; // Educator IDs preferred for this class
+}
+
+export interface MultiClassSchedule {
+  id: string;
+  name: string; // "Mid-Term Examination Schedule 2024"
+  academicYear: string;
+  classes: Class[];
+  totalExams: number;
+  totalSessions: number;
+  startDate: string;
+  endDate: string;
+  status: 'draft' | 'published' | 'archived';
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Class-Exam Assignment System
+export interface ClassExamAssignment {
+  id: string;
+  classId: string;
+  className: string;
+  examCardId: string;
+  examName: string;
+  examDate: string;
+  examStartTime: string;
+  examEndTime: string;
+  studentCount: number;
+  assignedRooms: string[]; // Room IDs where this exam will be conducted
+  roomAllocations: RoomAllocation[]; // How students are distributed across rooms
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RoomAllocation {
+  roomId: string;
+  roomName: string;
+  roomCapacity: number;
+  allocatedStudents: number;
+  remainingCapacity: number;
+  isFull: boolean;
+}
+
+export interface ClassExamSchedule {
+  id: string;
+  classId: string;
+  className: string;
+  academicYear: string;
+  examAssignments: ClassExamAssignment[];
+  totalExams: number;
+  totalStudents: number;
+  createdAt: string;
+  updatedAt: string;
 }
