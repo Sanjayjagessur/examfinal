@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Edit, Trash2, Users, Calendar, BookOpen, MapPin, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import { Class, Room, ClassExamAssignment, RoomAllocation, ExamCard } from '../types/invigilation';
+import { Class, ClassExamAssignment, RoomAllocation } from '../types/invigilation';
+import { ExamCard } from '../types';
+import { Room } from '../types/invigilation';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ClassExamAssignmentManagerProps {
