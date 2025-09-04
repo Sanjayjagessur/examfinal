@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Jagesaurus - Web-based application for school administrators to create, manage, and distribute exam timetables with automated invigilation scheduling",
   "private": true,
-  "homepage": "./",
+  "homepage": "https://sanjayjagessur.github.io/examfinal",
   "dependencies": {
     "@types/node": "^16.18.0",
     "@types/react": "^18.2.0",
@@ -39,7 +39,9 @@
     "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron public/electron.js\"",
     "electron-pack": "npm run build && electron-builder",
     "postbuild": "copy public\\electron.js build\\ && copy public\\preload.js build\\",
-    "dist": "npm run build && electron-builder"
+    "dist": "npm run build && electron-builder",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
@@ -67,6 +69,7 @@
     "electron": "^37.4.0",
     "electron-builder": "^26.0.12",
     "electron-is-dev": "^3.0.1",
+    "gh-pages": "^6.3.0",
     "wait-on": "^8.0.4"
   },
   "build": {
