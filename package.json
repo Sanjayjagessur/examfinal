@@ -15,6 +15,7 @@
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.0",
     "lucide-react": "^0.263.1",
+    "openai": "^5.18.1",
     "papaparse": "^5.4.1",
     "postcss": "^8.4.24",
     "react": "^18.2.0",
@@ -34,8 +35,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "electron": "npm run build && electron .",
-    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron": "npm run build && electron build/electron.js",
+    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron public/electron.js\"",
     "electron-pack": "npm run build && electron-builder",
     "postbuild": "copy public\\electron.js build\\ && copy public\\preload.js build\\",
     "dist": "npm run build && electron-builder"

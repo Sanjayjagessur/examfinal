@@ -1,12 +1,13 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const isDev = require('electron-is-dev');
 
 let mainWindow;
 
 function createWindow() {
-  // Create the browser window
+  console.log('Creating main window...');
+  
+  // Create the browser window with the working configuration
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -15,67 +16,38 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      enableRemoteModule: false,
-      preload: path.join(__dirname, 'preload.js'),
-      webSecurity: true,
-      allowRunningInsecureContent: false
+      preload: path.join(__dirname, 'preload.js')
     },
-    icon: path.join(__dirname, 'icon.ico'), // You can add an icon file
+    icon: path.join(__dirname, 'icon.ico'),
     title: 'Jagesaurus - Exam Timetable Manager',
     show: false, // Don't show until ready
+    center: true,
+    resizable: true,
+    minimizable: true,
+    maximizable: true,
+    closable: true
   });
 
-  // Set Content Security Policy
-  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'"]
-      }
-    });
-  });
+  console.log('Window created, loading content...');
 
-  // Load the app - always use built files for production
-  const startUrl = `file://${path.join(__dirname, 'index.html')}`;
-  
-  console.log('Loading URL:', startUrl);
-  console.log('Current directory:', __dirname);
-  console.log('Index.html path:', path.join(__dirname, 'index.html'));
-  
-  mainWindow.loadURL(startUrl).catch(err => {
-    console.error('Failed to load URL:', err);
-    mainWindow.loadFile(path.join(__dirname, 'index.html')).catch(fileErr => {
-      console.error('Failed to load file:', fileErr);
-    });
-  });
+  // Load the app from built files
+  const indexPath = path.join(__dirname, 'index.html');
+  console.log('Loading from:', indexPath);
+  mainWindow.loadFile(indexPath);
 
-  // Add error handling for page load
-  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
-    console.error('Page failed to load:', errorCode, errorDescription, validatedURL);
-  });
-
-  mainWindow.webContents.on('did-finish-load', () => {
-    console.log('Page loaded successfully');
-  });
-
-  mainWindow.webContents.on('dom-ready', () => {
-    console.log('DOM is ready');
-  });
-
-  // Show window when ready to prevent visual flash
+  // Show window when ready
   mainWindow.once('ready-to-show', () => {
+    console.log('Window ready to show!');
     mainWindow.show();
+    mainWindow.focus();
+    console.log('Window should now be visible and focused');
   });
 
   // Handle window closed
   mainWindow.on('closed', () => {
+    console.log('Main window closed');
     mainWindow = null;
   });
-
-  // Open DevTools in development (only when explicitly running in dev mode)
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.webContents.openDevTools();
-  }
 }
 
 // IPC handlers for file operations
@@ -150,17 +122,33 @@ ipcMain.handle('auto-load', async (event) => {
   }
 });
 
-// Create window when Electron is ready
-app.whenReady().then(createWindow);
+// App event handlers
+app.whenReady().then(() => {
+  console.log('Electron app is ready!');
+  console.log('Platform:', process.platform);
+  console.log('Architecture:', process.arch);
+  console.log('Node version:', process.version);
+  
+  try {
+    createWindow();
+    console.log('Window creation initiated');
+  } catch (err) {
+    console.error('Failed to create window:', err);
+  }
+}).catch(err => {
+  console.error('Failed to initialize app:', err);
+});
 
 // Quit when all windows are closed
 app.on('window-all-closed', () => {
+  console.log('All windows closed, quitting app');
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
 app.on('activate', () => {
+  console.log('App activated');
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }

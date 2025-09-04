@@ -1,5 +1,4 @@
 import React from 'react';
-import { useDrag } from 'react-dnd';
 import { ExamCard } from '../types';
 import { Clock, Users, CheckCircle } from 'lucide-react';
 
@@ -9,18 +8,22 @@ interface DraggableExamCardProps {
 
 const DraggableExamCard: React.FC<DraggableExamCardProps> = ({ examCard }) => {
   const isScheduled = !!examCard.date;
-  
-  const [{ isDragging }, drag] = useDrag({
-    type: 'examCard',
-    item: { id: examCard.id, type: 'examCard' },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-    canDrag: () => {
-      console.log('Attempting to drag exam card:', examCard.id);
-      return true;
-    },
-  });
+  const [isDragging, setIsDragging] = React.useState(false);
+
+  const handleDragStart = (e: React.DragEvent) => {
+    console.log('[DraggableExamCard] Starting drag for scheduled card:', examCard.id, examCard.paperName);
+    setIsDragging(true);
+    e.dataTransfer.setData('application/json', JSON.stringify({
+      id: examCard.id,
+      type: 'examCard',
+      isScheduled: true
+    }));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -39,12 +42,14 @@ const DraggableExamCard: React.FC<DraggableExamCardProps> = ({ examCard }) => {
 
   return (
     <div
-      ref={drag}
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       className={`exam-card bg-white border border-gray-200 rounded-lg p-2 shadow-sm cursor-grab hover:shadow-lg transition-all ${
         isDragging ? 'dragging' : ''
       } ${isScheduled ? 'scheduled' : ''}`}
       style={getCardStyle()}
-      title={isScheduled ? "Already scheduled - can be moved to different time/date" : "Drag to calendar to schedule"}
+      title={isScheduled ? "Drag to move to different date or back to unscheduled" : "Drag to calendar to schedule"}
     >
       <div className={`${isScheduled ? 'text-gray-600' : 'text-white'}`}>
         {/* Scheduled Status Indicator */}

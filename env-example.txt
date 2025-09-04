@@ -1,0 +1,8 @@
+# OpenAI API Configuration
+# Copy this file to .env and add your actual API key
+REACT_APP_OPENAI_API_KEY=your_openai_api_key_here
+
+# AI Feature Flags (optional)
+REACT_APP_ENABLE_AI_SUGGESTIONS=true
+REACT_APP_ENABLE_INVIGILATION_AI=true
+REACT_APP_ENABLE_TIMETABLE_AI=true

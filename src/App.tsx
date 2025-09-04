@@ -2,40 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { ExamCard } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import Header from './components/Header';
-import ExamCardManager from './components/ExamCardManager';
+import ExamTableManager from './components/ExamTableManager';
 import CalendarCanvas from './components/CalendarCanvas';
 import TimetablePreview from './components/TimetablePreview';
-import InvigilationManager from './components/InvigilationManager';
-import ClassManager from './components/ClassManager';
-import ClassExamAssignmentManager from './components/ClassExamAssignmentManager';
-import { Educator, Room, Hall, Class, MultiClassSchedule, ClassExamAssignment } from './types/invigilation';
+import InvigilationScheme from './components/InvigilationScheme';
+import AIGuardian from './components/AIGuardian';
+
 import { generateStudentTimetablePDF, generateExamSummaryPDF } from './utils/export';
 import { generateStudentTimetableWord, generateExamSummaryWord } from './utils/wordExport';
-import { generateInvigilationSchedulePDF, generateInvigilationScheduleWord, generateEducatorSchedulePDF, generateEducatorScheduleWord } from './utils/invigilationExport';
-import { Calendar, Users, BookOpen } from 'lucide-react';
+import { Calendar, Users, Brain } from 'lucide-react';
 
 
 
 function App() {
   const [examCards, setExamCards] = useState<ExamCard[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'timetable' | 'invigilation' | 'classes' | 'assignments'>('timetable');
-  const [dataLoaded, setDataLoaded] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<'timetable' | 'invigilation' | 'ai'>('timetable');
+  
+  // Invigilation state
+  const [invigilationEducators, setInvigilationEducators] = useState<any[]>([]);
+  const [invigilationRooms, setInvigilationRooms] = useState<any[]>([]);
+  const [invigilationExamSessions, setInvigilationExamSessions] = useState<any[]>([]);
+  const [invigilationRoomSessions, setInvigilationRoomSessions] = useState<any[]>([]);
+
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Multi-Class System State
-  const [classes, setClasses] = useState<Class[]>(() => {
-    const saved = localStorage.getItem('invigilation_classes');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [multiClassSchedules, setMultiClassSchedules] = useState<MultiClassSchedule[]>(() => {
-    const saved = localStorage.getItem('invigilation_multi_class_schedules');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [examAssignments, setExamAssignments] = useState<ClassExamAssignment[]>(() => {
-    const saved = localStorage.getItem('invigilation_exam_assignments');
-    return saved ? JSON.parse(saved) : [];
-  });
+
 
   // Check if running in Electron environment
   const isElectron = window.electronAPI !== undefined;
@@ -54,25 +46,11 @@ function App() {
     }
   }, [isDarkMode]);
 
-  // Save classes to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('invigilation_classes', JSON.stringify(classes));
-  }, [classes]);
 
-  // Save multi-class schedules to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('invigilation_multi_class_schedules', JSON.stringify(multiClassSchedules));
-  }, [multiClassSchedules]);
 
-  // Save exam assignments to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('invigilation_exam_assignments', JSON.stringify(examAssignments));
-  }, [examAssignments]);
-
-  // Force refresh when examCards change to fix frozen state issue
+  // Simple logging for exam cards updates
   useEffect(() => {
     if (examCards.length > 0) {
-      // Only log the update, don't force refresh
       console.log('Exam cards updated, count:', examCards.length);
     }
   }, [examCards.length]);
@@ -112,13 +90,6 @@ function App() {
             
             console.log('Auto-loaded validated exam cards:', validatedExamCards);
             setExamCards(validatedExamCards);
-            setDataLoaded(prev => prev + 1);
-            
-            // Force an additional state update to ensure synchronization
-            setTimeout(() => {
-              console.log('Auto-load: Forcing additional state synchronization');
-              setDataLoaded(prev => prev + 1);
-            }, 100);
             
             return;
           }
@@ -158,7 +129,6 @@ function App() {
           
           console.log('localStorage validated exam cards:', validatedExamCards);
           setExamCards(validatedExamCards);
-          setDataLoaded(prev => prev + 1);
         } catch (error) {
           console.error('Error parsing localStorage data:', error);
           setExamCards([]);
@@ -214,6 +184,13 @@ function App() {
     setExamCards(prev => prev.filter(card => card.id !== id));
   };
 
+  const deleteAllExamCards = () => {
+    if (window.confirm('Are you sure you want to delete ALL exam cards? This action cannot be undone.')) {
+      setExamCards([]);
+      alert('All exam cards have been deleted.');
+    }
+  };
+
 
 
   const exportStudentTimetable = () => {
@@ -240,13 +217,7 @@ function App() {
     }
   };
 
-  const exportInvigilationSchedule = async (sessions: any[]) => {
-    try {
-      await generateInvigilationScheduleWord(sessions);
-    } catch (error) {
-      alert('Error generating invigilation schedule: ' + error);
-    }
-  };
+
 
   const saveTimetable = async () => {
     if (!isElectron) {
@@ -311,22 +282,8 @@ function App() {
         
         console.log('Validated exam cards:', validatedExamCards);
         
-        // Use a callback to ensure state is properly updated
+        // Set exam cards directly
         setExamCards(validatedExamCards);
-        
-        // Force a re-render by updating a timestamp
-        setTimeout(() => {
-          console.log('State update completed, exam cards count:', validatedExamCards.length);
-        }, 0);
-        
-        // Increment dataLoaded to force ExamCardManager re-render
-        setDataLoaded(prev => prev + 1);
-        
-        // Force an additional state update to ensure synchronization
-        setTimeout(() => {
-          console.log('Forcing additional state synchronization');
-          setDataLoaded(prev => prev + 1);
-        }, 100);
         
         alert(`Timetable loaded successfully from: ${result.filePath}\nLoaded ${validatedExamCards.length} exam cards.`);
       } else {
@@ -348,65 +305,60 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header 
-        onExportStudentTimetable={exportStudentTimetable}
-        onExportExamSummary={exportExamSummary}
-        onExportStudentTimetableWord={exportToWord}
-        onExportExamSummaryWord={exportExamSummaryToWord}
-        onSaveTimetable={isElectron ? saveTimetable : undefined}
-        onLoadTimetable={isElectron ? loadTimetable : undefined}
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
-      />
+             <Header 
+         onExportStudentTimetable={exportStudentTimetable}
+         onExportExamSummary={exportExamSummary}
+         onExportStudentTimetableWord={exportToWord}
+         onExportExamSummaryWord={exportExamSummaryToWord}
+         onSaveTimetable={isElectron ? saveTimetable : undefined}
+         onLoadTimetable={isElectron ? loadTimetable : undefined}
+         onDeleteAllExamCards={deleteAllExamCards}
+         isDarkMode={isDarkMode}
+         onToggleDarkMode={toggleDarkMode}
+       />
       
       {/* Main Navigation Tabs */}
       <div className="pt-16">
                  <div className="bg-white border-b border-gray-200">
            <nav className="flex space-x-8 px-6">
-             <button
-               onClick={() => setActiveTab('timetable')}
-               className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                 activeTab === 'timetable'
-                   ? 'border-blue-500 text-blue-600'
-                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-               }`}
-             >
-               <Calendar size={16} />
-               <span>Exam Timetable</span>
-             </button>
-             <button
-               onClick={() => setActiveTab('invigilation')}
-               className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                 activeTab === 'invigilation'
-                   ? 'border-blue-500 text-blue-600'
-                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-               }`}
-             >
-               <Users size={16} />
-               <span>Invigilation Management</span>
-             </button>
-             <button
-               onClick={() => setActiveTab('classes')}
-               className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                 activeTab === 'classes'
-                   ? 'border-blue-500 text-blue-600'
-                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-               }`}
-             >
-               <Users size={16} />
-               <span>Class Management</span>
-             </button>
-             <button
-               onClick={() => setActiveTab('assignments')}
-               className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                 activeTab === 'assignments'
-                   ? 'border-blue-500 text-blue-600'
-                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-               }`}
-             >
-               <BookOpen size={16} />
-               <span>Exam Assignments</span>
-             </button>
+                           <button
+                onClick={() => setActiveTab('timetable')}
+                className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'timetable'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Calendar size={16} />
+                <span>Exam Timetable</span>
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('invigilation')}
+                className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'invigilation'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Users size={16} />
+                <span>Invigilation Scheme</span>
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('ai')}
+                className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'ai'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Brain size={16} />
+                <span>AI Guardian</span>
+              </button>
+              
+             
+             
            </nav>
            
            
@@ -417,13 +369,12 @@ function App() {
           <div className="flex h-screen">
             {/* Left Sidebar - Exam Card Management */}
             <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
-              <ExamCardManager
-                key={`exam-manager-${dataLoaded}-${examCards.length}`}
-                examCards={examCards}
-                onAddExamCard={addExamCard}
-                onUpdateExamCard={updateExamCard}
-                onDeleteExamCard={deleteExamCard}
-              />
+                             <ExamTableManager
+                 examCards={examCards}
+                 onAddExamCard={addExamCard}
+                 onUpdateExamCard={updateExamCard}
+                 onDeleteExamCard={deleteExamCard}
+               />
             </div>
 
             {/* Center - Calendar Canvas */}
@@ -449,36 +400,33 @@ function App() {
 
         {activeTab === 'invigilation' && (
           <div className="h-screen">
-            <InvigilationManager
+            <InvigilationScheme 
               examCards={examCards}
-              onExportInvigilationSchedule={exportInvigilationSchedule}
+              onUpdateEducators={setInvigilationEducators}
+              onUpdateRooms={setInvigilationRooms}
+              onUpdateExamSessions={setInvigilationExamSessions}
+              onUpdateRoomSessions={setInvigilationRoomSessions}
+              educators={invigilationEducators}
+              rooms={invigilationRooms}
+              examSessions={invigilationExamSessions}
+              roomSessions={invigilationRoomSessions}
             />
           </div>
         )}
 
-        {activeTab === 'classes' && (
+        {activeTab === 'ai' && (
           <div className="h-screen">
-            <ClassManager
-              classes={classes}
-              educators={[]}
-              rooms={[]}
-              halls={[]}
-              onClassesChange={setClasses}
+            <AIGuardian 
+              educators={invigilationEducators}
+              rooms={invigilationRooms}
+              examSessions={invigilationExamSessions}
+              roomSessions={invigilationRoomSessions}
+              onUpdateRoomSessions={setInvigilationRoomSessions}
             />
           </div>
         )}
 
-        {activeTab === 'assignments' && (
-          <div className="h-screen">
-            <ClassExamAssignmentManager
-              classes={classes}
-              rooms={[]}
-              examCards={examCards}
-              assignments={examAssignments}
-              onAssignmentsChange={setExamAssignments}
-            />
-          </div>
-        )}
+
       </div>
     </div>
   );

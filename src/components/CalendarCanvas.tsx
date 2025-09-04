@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { useDrop } from 'react-dnd';
 import { ExamCard } from '../types';
 import DraggableExamCard from './DraggableExamCard';
 import { format, addDays, startOfWeek } from 'date-fns';
@@ -52,23 +51,43 @@ const CalendarCanvas: React.FC<CalendarCanvasProps> = ({
   };
 
   const DayColumn: React.FC<{ day: Date }> = ({ day }) => {
-    const [{ isOver }, drop] = useDrop({
-      accept: 'examCard',
-      drop: (item: { id: string; type: string }) => {
-        console.log('Dropping exam card:', item.id, 'on day:', day);
-        handleDrop(item, day);
-      },
-      collect: (monitor) => ({
-        isOver: monitor.isOver(),
-      }),
-    });
+    const [isOver, setIsOver] = React.useState(false);
+
+    const handleDragOver = (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsOver(true);
+    };
+
+    const handleDragLeave = () => {
+      setIsOver(false);
+    };
+
+    const handleDropEvent = (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsOver(false);
+      
+      try {
+        const data = e.dataTransfer.getData('application/json');
+        if (data) {
+          const item = JSON.parse(data);
+          console.log('Dropping exam card:', item.id, 'on day:', day);
+          if (item.type === 'examCard') {
+            handleDrop(item, day);
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing drop data:', error);
+      }
+    };
 
     const dayExamCards = getExamCardsForDay(day);
     const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
     return (
       <div
-        ref={drop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDropEvent}
         className={`flex-1 min-h-[400px] p-4 border-2 rounded-lg transition-all duration-200 ${
           isOver 
             ? 'bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-300 shadow-lg' 
